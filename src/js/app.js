@@ -16,10 +16,16 @@ const btnHold = document.getElementById('btn-hold');
 const btnAnswerMain = document.getElementById('btn-answer');
 const volumeSlider = document.getElementById('volume-slider');
 const phoneInput = document.getElementById('phone-number');
+const soundToggle = document.getElementById('call-sound-enabled');
+const vibrationToggle = document.getElementById('call-vibration-enabled');
 
 let savedConfig = null;
 let timerInterval = null;
 let callSeconds = 0;
+
+const storedPrefs = JSON.parse(localStorage.getItem('callPrefs') || '{}');
+if (typeof storedPrefs.sound === 'boolean') soundToggle.checked = storedPrefs.sound;
+if (typeof storedPrefs.vibration === 'boolean') vibrationToggle.checked = storedPrefs.vibration;
 
 init();
 
@@ -31,8 +37,14 @@ async function init() {
     onConnect: () => setStatus(true),
     onDisconnect: () => setStatus(false),
     onIncoming: (info) => {
-      window.electronAPI.showIncomingCall(info);
-      showCallInterface(info.displayName || info.number, 'Входящий звонок...', true);
+      const formatted = formatPhone(info.number || info.displayName);
+      const prefs = currentNotificationPrefs();
+      window.electronAPI.showIncomingCall({
+        ...info,
+        formatted,
+        preferences: prefs
+      });
+      showCallInterface(formatted, 'Входящий звонок...', true);
     },
     onCallEstablished: () => {
       window.electronAPI.closePopup();
@@ -69,6 +81,11 @@ settingsForm.addEventListener('submit', async (e) => {
     password: document.getElementById('password').value
   };
 
+  localStorage.setItem(
+    'callPrefs',
+    JSON.stringify(currentNotificationPrefs())
+  );
+
   await window.electronAPI.saveSipConfig(config);
   await sipManager.connect(config);
 });
@@ -76,7 +93,8 @@ settingsForm.addEventListener('submit', async (e) => {
 btnCall.addEventListener('click', () => {
   const number = phoneInput.value.trim();
   if (!number) return;
-  showCallInterface(number, 'Исходящий вызов...', false);
+  const formatted = formatPhone(number);
+  showCallInterface(formatted, 'Исходящий вызов...', false);
   sipManager.makeCall(number);
 });
 
@@ -100,6 +118,10 @@ volumeSlider.addEventListener('input', (e) => sipManager.setVolume(e.target.valu
 
 window.electronAPI.onTriggerAnswer(() => sipManager.answerCall());
 window.electronAPI.onTriggerReject(() => sipManager.hangUp());
+window.electronAPI.onTriggerCreateAppeal(() => {
+  hideCallInterface();
+  // TODO: при необходимости откройте модуль обращений и подставьте номер
+});
 
 function setStatus(isOnline) {
   statusLight.className = isOnline ? 'status-online' : 'status-offline';
@@ -148,4 +170,17 @@ function startTimer() {
 function stopTimer() {
   clearInterval(timerInterval);
   callTimerDisplay.textContent = '00:00';
+}
+
+function currentNotificationPrefs() {
+  return {
+    sound: soundToggle.checked,
+    vibration: vibrationToggle.checked
+  };
+}
+
+function formatPhone(number = '') {
+  const digits = number.replace(/\D/g, '').slice(-10);
+  if (digits.length < 10) return number;
+  return `+7 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 8)}-${digits.slice(8)}`;
 }

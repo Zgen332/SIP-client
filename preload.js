@@ -9,9 +9,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   onTriggerAnswer: (callback) => ipcRenderer.on('trigger-answer-call', callback),
   onTriggerReject: (callback) => ipcRenderer.on('trigger-reject-call', callback),
+  onTriggerCreateAppeal: (callback) => ipcRenderer.on('trigger-create-appeal', callback),
 
   acceptCallAction: () => ipcRenderer.send('accept-call-action'),
   rejectCallAction: () => ipcRenderer.send('reject-call-action'),
-  onSetCallerInfo: (callback) =>
-    ipcRenderer.on('set-caller-info', (_, value) => callback(value))
+  createAppealAction: () => ipcRenderer.send('create-appeal-action'),
+  onSetCallerInfo: (callback) => ipcRenderer.on('set-caller-info', (_, value) => callback(value))
 });

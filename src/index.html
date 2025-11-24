@@ -37,6 +37,17 @@
         <input id="port" type="number" placeholder="WSS порт (например, 7443)" required />
         <input id="username" type="text" placeholder="Логин" required />
         <input id="password" type="password" placeholder="Пароль" required />
+
+        <label class="toggle-setting">
+          <input type="checkbox" id="call-sound-enabled" checked />
+          <span>Звуковое оповещение (popup)</span>
+        </label>
+
+        <label class="toggle-setting">
+          <input type="checkbox" id="call-vibration-enabled" checked />
+          <span>Вибрация окна</span>
+        </label>
+
         <button type="submit" class="btn-secondary">Сохранить и подключиться</button>
       </form>
     </section>
