@@ -422,28 +422,57 @@ export class SIPManager {
         // Если звонящий сам повесил трубку (событие BYE)
     }
 
-    setupRemoteMedia() {
-        if (!this.session || !this.session.sessionDescriptionHandler) return;
+// src/js/sip-manager.js
 
-        const pc = this.session.sessionDescriptionHandler.peerConnection;
-        const remoteAudio = document.getElementById('remote-audio');
-        
-        if (!remoteAudio) {
-            console.error("Элемент #remote-audio не найден!");
-            return;
-        }
+// ... (остальной код SIPManager)
 
-        // Получаем все входящие треки (аудио от собеседника)
-        pc.getReceivers().forEach((receiver) => {
-            if (receiver.track && receiver.track.kind === 'audio') {
-                const remoteStream = new MediaStream([receiver.track]);
-                remoteAudio.srcObject = remoteStream;
-                
-                // Важно: запускаем воспроизведение
-                remoteAudio.play().catch(e => console.error("Ошибка Play:", e));
-            }
-        });
+// --- Логика WebRTC: Привязка аудио ---
+setupRemoteMedia() {
+    if (!this.session || !this.session.sessionDescriptionHandler) {
+        console.error("Нет активной сессии или sessionDescriptionHandler.");
+        return;
     }
+
+    const remoteAudio = document.getElementById('remote-audio');
+    
+    if (!remoteAudio) {
+        // Эта ошибка возникала, если вы пытались запустить этот код в закрытом Popup!
+        // Теперь, когда логика выполняется только в index.html, эта ошибка должна исчезнуть.
+        console.error("Элемент #remote-audio не найден! Невозможно воспроизвести звук.");
+        return;
+    }
+
+    // 1. Получаем удаленный медиа-поток (remoteStream)
+    const remoteStream = new MediaStream();
+
+    // 2. Получаем треки из обработчика сессии
+    // sessionDescriptionHandler.remoteMediaStream - устарел, используем receiver
+    
+    // Получаем все аудио-трансиверы (приемники)
+    const receivers = this.session.sessionDescriptionHandler.peerConnection.getReceivers();
+    
+    receivers.forEach(receiver => {
+        // Нас интересуют только аудио-треки
+        if (receiver.track && receiver.track.kind === 'audio') {
+            remoteStream.addTrack(receiver.track);
+        }
+    });
+
+    // 3. Привязываем поток к аудио-элементу
+    if (remoteStream.getTracks().length > 0) {
+        remoteAudio.srcObject = remoteStream;
+        console.log("Удаленное аудио успешно привязано.");
+        
+        // 💡 Важно: Программно запускаем воспроизведение на случай блокировки браузером
+        remoteAudio.play().catch(e => {
+            console.warn("Ошибка автовоспроизведения (требуется взаимодействие пользователя):", e);
+            // В Electron это часто не проблема, но в обычных браузерах требует клика
+        });
+    } else {
+        console.warn("В удаленном потоке не найдено аудио-дорожек.");
+    }
+}
+// ... (остальной код SIPManager)
     
     setVolume(value) {
         const el = document.getElementById('remote-audio');
