@@ -40,8 +40,8 @@
 ### 1\. Клонирование репозитория
 
 ```bash
-git clone https://github.com/Zgen332/ARS-Electron-app.git
-cd ARS-Electron-app
+git clone https://github.com/Zgen332/SIP-client.git
+cd SIP-client
 ```
 
 ### 2\. Установка зависимостей
