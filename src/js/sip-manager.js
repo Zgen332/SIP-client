@@ -66,8 +66,11 @@ export class SIPManager {
       const mediaStreamFactory = SIP.Web.defaultMediaStreamFactory();
       return new SIP.Web.SessionDescriptionHandler(logger, mediaStreamFactory, {
         peerConnectionConfiguration: {
-          iceServers: [],
-          iceTransportPolicy: 'relay'
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+          ],
+          iceTransportPolicy: 'all'
         }
       });
     };
