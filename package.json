@@ -1,45 +1,22 @@
-
 {
   "name": "electron-sip-client",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "SIP Client built with Electron and SIP.js",
   "main": "main.js",
-  
   "scripts": {
-    "start": "npm run build:js && electron .",
-    "build:js": "webpack --mode development",
-    "package": "npm run build:js && electron-builder --dir",
-    "dist": "npm run build:js && electron-builder"
+    "start": "electron .",
+    "package": "electron-builder --dir",
+    "dist": "electron-builder"
   },
-  
   "build": {
-    "appId": "com.yourcompany.sipclient", 
-    "productName": "SipClientApp",       
-    "directories": {
-      "output": "release"               
-    },
-    "files": [
-      "main.js",
-      "package.json",
-      "src/**/*",        
-      "dist/bundle.js"   
-    ],
-    "win": {
-      "target": "portable", 
-      "icon": "build/icon.ico" 
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "build/icon.icns" 
-    }
+    "...": "без изменений"
   },
   "devDependencies": {
     "electron-builder": "^24.9.1"
-    
   },
   "dependencies": {
-    "sip.js": "^0.21.1",
-    "electron-store": "^8.2.0"
-    
+    "electron": "^30.0.9",
+    "electron-store": "^8.2.0",
+    "sip.js": "^0.21.1"
   }
 }
