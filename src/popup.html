@@ -2,19 +2,74 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Входящий</title>
-    <link rel="stylesheet" href="css/call-popup.css">
+    <title>Входящий звонок</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        h3 { margin: 0; color: #bdc3c7; font-size: 14px; }
+        h1 { margin: 10px 0; font-size: 24px; }
+        p { margin: 0 0 20px 0; font-size: 18px; opacity: 0.8; }
+        
+        .btn-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+        }
+        button {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            color: white;
+            font-weight: bold;
+        }
+        button:active { transform: scale(0.95); }
+        .btn-accept { background-color: #2ecc71; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
+        .btn-reject { background-color: #e74c3c; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4); }
+    </style>
 </head>
 <body>
-    <div class="caller-info" id="callerNumber">...</div>
-    <div class="caller-name" id="callerName">Звонок</div>
 
-    <div class="actions">
-        <button id="btnAnswer" class="btn-answer">Ответить</button>
-        <button id="btnReject" class="btn-reject">Сброс</button>
+    <h3>Входящий звонок</h3>
+    <h1 id="caller-name">Неизвестный</h1>
+    <p id="caller-number">...</p>
+
+    <div class="btn-container">
+        <button id="btn-accept" class="btn-accept">📞 Принять</button>
+        <button id="btn-reject" class="btn-reject">❌ Отклонить</button>
     </div>
-    <button id="btnAppeal" class="btn-appeal">Создать обращение</button>
 
-    <script src="js/call-popup.js"></script>
+    <script>
+        const nameEl = document.getElementById('caller-name');
+        const numEl = document.getElementById('caller-number');
+
+        // Получаем данные от Main process
+        window.electronAPI.onSetCallerInfo((info) => {
+            nameEl.innerText = info.displayName || 'Неизвестный';
+            numEl.innerText = info.number || '';
+        });
+
+        // Кнопки просто шлют сигналы
+        document.getElementById('btn-accept').addEventListener('click', () => {
+            window.electronAPI.acceptCallAction();
+        });
+
+        document.getElementById('btn-reject').addEventListener('click', () => {
+            window.electronAPI.rejectCallAction();
+        });
+    </script>
 </body>
 </html>

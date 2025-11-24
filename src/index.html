@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -15,6 +15,7 @@
     </script>
 </head>
 <body>
+    <audio id="remote-audio" autoplay></audio>
     <div class="app-container">
         <aside class="sidebar">
             <div class="status-indicator" id="sipStatus">OFFLINE</div>
@@ -89,5 +90,85 @@
         </main>
     </div>
     <script type="module" src="js/app.js"></script>
+</body>
+</html> -->
+
+<!-- v2 -->
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self'; 
+               script-src 'self' 'unsafe-eval'; 
+               style-src 'self' 'unsafe-inline';
+               connect-src 'self' wss://f2.ads365.ru:7443;
+               media-src *;">
+    <title>Electron SIP Клиент</title>
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+
+    <header>
+        <h1>📞 Electron SIP Клиент</h1>
+        <div class="status-indicator">
+            <span id="status-light" class="status-offline"></span>
+            <span id="status-text">Offline</span>
+        </div>
+    </header>
+
+    <main>
+        
+        <div id="dialer-panel" class="panel">
+            <h2>Набор номера</h2>
+            
+            <input type="text" id="phone-number" placeholder="Введите номер для звонка">
+            
+            <button id="btn-call" class="btn-primary">📞 Позвонить</button>
+            
+            <hr>
+            
+            <h3>Настройки SIP</h3>
+            <form id="settings-form">
+                <input type="text" id="sip-server" placeholder="SIP Сервер (realm)" required value="f2.ads365.ru">
+                <input type="text" id="port" placeholder="WSS Порт (e.g., 7443)" required value="7443">
+                <input type="text" id="username" placeholder="Логин (505)" required>
+                <input type="password" id="password" placeholder="Пароль" required>
+                <button type="submit" class="btn-secondary">⚙️ Подключиться / Сохранить</button>
+            </form>
+        </div>
+
+        <div id="call-panel" class="panel hidden">
+            <div class="call-info">
+                <p>Звонок с:</p>
+                <h2 id="caller-name"></h2> 
+                
+                <p id="caller-number" class="call-status-text"></p>
+                
+                <div class="call-timer" id="call-timer">00:00</div>
+            </div>
+
+            <div class="call-controls">
+                
+                <button id="btn-answer" class="btn-control hidden">✅ Принять</button>
+                
+                <button id="btn-hold" class="btn-control">II Удержать</button>
+                
+                <div class="volume-control">
+                    <label for="volume-slider">Громкость:</label>
+                    <input type="range" id="volume-slider" min="0.0" max="1.0" step="0.05" value="1.0">
+                </div>
+                
+                <button id="btn-hangup" class="btn-danger">❌ Завершить</button>
+            </div>
+        </div>
+
+    </main>
+    
+    <audio id="remote-audio" autoplay></audio>
+
+    <script src="../dist/bundle.js"></script>
 </body>
 </html>

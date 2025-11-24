@@ -420,10 +420,6 @@ export class SIPManager {
         });
         
         // Если звонящий сам повесил трубку (событие BYE)
-        this.session.on('bye', () => {
-             this.callbacks.onCallEnded?.();
-             this.session = null;
-        });
     }
 
     setupRemoteMedia() {
