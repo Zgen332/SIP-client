@@ -43,8 +43,9 @@
     display: none;
   }
   
-  input,
-  button {
+input,
+button,
+select {
     width: 100%;
     border-radius: 12px;
     border: none;
@@ -54,10 +55,18 @@
     box-sizing: border-box;
   }
   
-  input {
+input,
+select {
     background: rgba(255, 255, 255, 0.08);
     color: #fff;
   }
+
+.field-label {
+  display: block;
+  font-size: 14px;
+  margin: 8px 0 4px;
+  color: rgba(255, 255, 255, 0.75);
+}
   
   .btn-primary {
     background: #4ade80;

@@ -7,6 +7,10 @@ export class SIPManager {
     this.session = null;
     this.callbacks = {};
     this.config = null;
+    this.devicePrefs = {
+      inputDeviceId: null,
+      outputDeviceId: null
+    };
   }
 
   setCallbacks(callbacks) {
@@ -62,20 +66,38 @@ export class SIPManager {
       const mediaStreamFactory = SIP.Web.defaultMediaStreamFactory();
       return new SIP.Web.SessionDescriptionHandler(logger, mediaStreamFactory, {
         peerConnectionConfiguration: {
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' }
-          ],
-          iceTransportPolicy: 'all'
+          iceServers: [],
+          iceTransportPolicy: 'relay'
         }
       });
     };
   }
 
+  setDevicePreferences(prefs = {}) {
+    this.devicePrefs = {
+      inputDeviceId: prefs.inputDeviceId || null,
+      outputDeviceId: prefs.outputDeviceId || null
+    };
+    this.applyOutputDevicePreference();
+  }
+
+  createConstraints() {
+    if (this.devicePrefs.inputDeviceId) {
+      return {
+        audio: {
+          deviceId: { exact: this.devicePrefs.inputDeviceId }
+        },
+        video: false
+      };
+    }
+
+    return { audio: true, video: false };
+  }
+
   inviteOptions() {
     return {
       sessionDescriptionHandlerOptions: {
-        constraints: { audio: true, video: false }
+        constraints: this.createConstraints()
       }
     };
   }
@@ -157,10 +179,20 @@ export class SIPManager {
     });
 
     audioEl.srcObject = remoteStream;
+    this.applyOutputDevicePreference(audioEl);
   }
 
   setVolume(value) {
     const el = document.getElementById('remote-audio');
     if (el) el.volume = Number(value);
+  }
+
+  applyOutputDevicePreference(target) {
+    const audioEl = target || document.getElementById('remote-audio');
+    if (!audioEl || !audioEl.setSinkId || !this.devicePrefs.outputDeviceId) return;
+
+    audioEl.setSinkId(this.devicePrefs.outputDeviceId).catch((error) => {
+      console.warn('Не удалось применить устройство вывода', error);
+    });
   }
 }

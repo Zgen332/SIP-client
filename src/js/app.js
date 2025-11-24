@@ -18,6 +18,8 @@ const volumeSlider = document.getElementById('volume-slider');
 const phoneInput = document.getElementById('phone-number');
 const soundToggle = document.getElementById('call-sound-enabled');
 const vibrationToggle = document.getElementById('call-vibration-enabled');
+const inputDeviceSelect = document.getElementById('input-device');
+const outputDeviceSelect = document.getElementById('output-device');
 
 let savedConfig = null;
 let timerInterval = null;
@@ -27,11 +29,15 @@ const storedPrefs = JSON.parse(localStorage.getItem('callPrefs') || '{}');
 if (typeof storedPrefs.sound === 'boolean') soundToggle.checked = storedPrefs.sound;
 if (typeof storedPrefs.vibration === 'boolean') vibrationToggle.checked = storedPrefs.vibration;
 
+const storedDevicePrefs = getStoredDevicePrefs();
+sipManager.setDevicePreferences(storedDevicePrefs);
+
 init();
 
 async function init() {
   savedConfig = await window.electronAPI.getSipConfig();
   hydrateForm(savedConfig);
+  await initializeDeviceSelectors();
 
   sipManager.setCallbacks({
     onConnect: () => setStatus(true),
@@ -123,6 +129,9 @@ window.electronAPI.onTriggerCreateAppeal(() => {
   // TODO: при необходимости откройте модуль обращений и подставьте номер
 });
 
+inputDeviceSelect?.addEventListener('change', handleDevicePreferenceChange);
+outputDeviceSelect?.addEventListener('change', handleDevicePreferenceChange);
+
 function setStatus(isOnline) {
   statusLight.className = isOnline ? 'status-online' : 'status-offline';
   statusText.textContent = isOnline ? 'Online' : 'Offline';
@@ -183,4 +192,72 @@ function formatPhone(number = '') {
   const digits = number.replace(/\D/g, '').slice(-10);
   if (digits.length < 10) return number;
   return `+7 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 8)}-${digits.slice(8)}`;
+}
+
+function getStoredDevicePrefs() {
+  try {
+    return JSON.parse(localStorage.getItem('devicePrefs')) || {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function saveDevicePrefs(prefs) {
+  localStorage.setItem('devicePrefs', JSON.stringify(prefs));
+}
+
+async function initializeDeviceSelectors() {
+  if (!navigator.mediaDevices?.enumerateDevices) return;
+
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+  } catch (error) {
+    console.warn('Не удалось запросить доступ к микрофону', error);
+  }
+
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const audioInputs = devices.filter((d) => d.kind === 'audioinput');
+  const audioOutputs = devices.filter((d) => d.kind === 'audiooutput');
+
+  populateDeviceSelect(
+    inputDeviceSelect,
+    audioInputs,
+    storedDevicePrefs.inputDeviceId,
+    'Системный микрофон'
+  );
+
+  populateDeviceSelect(
+    outputDeviceSelect,
+    audioOutputs,
+    storedDevicePrefs.outputDeviceId,
+    'Системный динамик'
+  );
+}
+
+function populateDeviceSelect(selectEl, devices, selectedId, defaultLabel) {
+  if (!selectEl) return;
+  selectEl.innerHTML = '';
+
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = defaultLabel;
+  selectEl.appendChild(defaultOption);
+
+  devices.forEach((device, index) => {
+    const option = document.createElement('option');
+    option.value = device.deviceId;
+    option.textContent = device.label || `${defaultLabel} ${index + 1}`;
+    selectEl.appendChild(option);
+  });
+
+  selectEl.value = selectedId || '';
+}
+
+function handleDevicePreferenceChange() {
+  const prefs = {
+    inputDeviceId: inputDeviceSelect?.value || null,
+    outputDeviceId: outputDeviceSelect?.value || null
+  };
+  saveDevicePrefs(prefs);
+  sipManager.setDevicePreferences(prefs);
 }
