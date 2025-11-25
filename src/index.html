@@ -15,16 +15,20 @@
   </script>
 </head>
 <body>
-  <header>
-    <h1>📞 SIP Клиент</h1>
-    <div class="status-indicator">
-      <span id="status-light" class="status-offline"></span>
-      <span id="status-text">Offline</span>
-    </div>
-  </header>
+  <div class="app-shell">
+    <aside class="side-nav">
+      <div class="side-header">
+        <h1>📞 SIP Клиент</h1>
+      </div>
+      <nav class="nav-list">
+        <button class="nav-link active" data-target="dialer-panel">Звонилка</button>
+        <button class="nav-link" data-target="journal-panel">Журнал звонков</button>
+        <button class="nav-link" data-target="appeals-panel">Обращения</button>
+      </nav>
+    </aside>
 
-  <main>
-    <section id="dialer-panel" class="panel">
+    <main class="content-area">
+      <section id="dialer-panel" class="panel">
       <h2>Набор номера</h2>
       <input id="phone-number" type="text" placeholder="Введите номер абонента" />
       <button id="btn-call" class="btn-primary">Позвонить</button>
@@ -32,6 +36,10 @@
       <hr />
 
       <h3>Настройки SIP</h3>
+      <div class="status-indicator status-inline">
+        <span id="status-light" class="status-offline"></span>
+        <span id="status-text">Offline</span>
+      </div>
       <form id="settings-form">
         <input id="display-name" type="text" placeholder="Ваше имя (отображается при звонках)" />
         <input id="sip-server" type="text" placeholder="SIP сервер (realm)" required />
@@ -56,30 +64,68 @@
         <select id="output-device"></select>
 
         <button type="submit" class="btn-secondary">Сохранить и подключиться</button>
+        <p class="form-hint" id="settings-notice" aria-live="polite"></p>
       </form>
     </section>
 
-    <section id="call-panel" class="panel hidden">
-      <div class="call-info">
-        <p>Звонок</p>
-        <h2 id="caller-name">Неизвестный</h2>
-        <p id="caller-number" class="call-status-text"></p>
-        <div id="call-timer" class="call-timer">00:00</div>
-      </div>
-
-      <div class="call-controls">
-        <button id="btn-answer" class="btn-control hidden">Принять</button>
-        <button id="btn-hold" class="btn-control">II Удержать</button>
-
-        <div class="volume-control">
-          <label for="volume-slider">Громкость</label>
-          <input id="volume-slider" type="range" min="0" max="1" step="0.05" value="1" />
+      <section id="call-panel" class="panel hidden">
+        <div class="call-info">
+          <p>Звонок</p>
+          <h2 id="caller-name">Неизвестный</h2>
+          <p id="caller-number" class="call-status-text"></p>
+          <div id="call-timer" class="call-timer">00:00</div>
         </div>
 
-        <button id="btn-hangup" class="btn-danger">Завершить</button>
+        <div class="call-controls">
+          <button id="btn-answer" class="btn-control hidden">Принять</button>
+          <button id="btn-hold" class="btn-control">II Удержать</button>
+
+          <div class="volume-control">
+            <label for="volume-slider">Громкость</label>
+            <input id="volume-slider" type="range" min="0" max="1" step="0.05" value="1" />
+          </div>
+
+          <button id="btn-hangup" class="btn-danger">Завершить</button>
+        </div>
+      </section>
+
+      <section id="journal-panel" class="panel hidden">
+        <div class="panel-heading">
+        <span>Журнал звонков</span>
+      </div>
+      <div class="placeholder-card">
+        <p>Здесь появится список совершённых и принятых звонков.</p>
+        <ul>
+          <li>Время и дата звонка</li>
+          <li>Имя абонента и номер</li>
+          <li>Статус соединения</li>
+        </ul>
       </div>
     </section>
-  </main>
+
+      <section id="appeals-panel" class="panel hidden">
+        <div class="panel-heading">
+          <span>Обращения</span>
+        </div>
+        <div class="placeholder-grid">
+          <div class="placeholder-card">
+            <h4>Создание обращения</h4>
+            <p>Форма для оформления заявки: клиент, контакты, описание.</p>
+            <div class="fake-field"></div>
+            <div class="fake-field"></div>
+            <div class="fake-field tall"></div>
+          </div>
+          <div class="placeholder-card">
+            <h4>Список обращений</h4>
+            <p>Сюда попадут все созданные заявки с быстрым поиском и фильтрами.</p>
+            <div class="fake-row"></div>
+            <div class="fake-row"></div>
+            <div class="fake-row"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <audio id="remote-audio" autoplay></audio>
   <script type="module" src="./js/app.js"></script>

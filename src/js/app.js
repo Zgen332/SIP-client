@@ -20,10 +20,15 @@ const soundToggle = document.getElementById('call-sound-enabled');
 const vibrationToggle = document.getElementById('call-vibration-enabled');
 const inputDeviceSelect = document.getElementById('input-device');
 const outputDeviceSelect = document.getElementById('output-device');
+const settingsNotice = document.getElementById('settings-notice');
+const navLinks = document.querySelectorAll('.nav-link');
 
 let savedConfig = null;
 let timerInterval = null;
 let callSeconds = 0;
+let noticeTimer = null;
+let activeTabId = 'dialer-panel';
+const tabPanels = ['dialer-panel', 'journal-panel', 'appeals-panel'];
 
 const storedPrefs = JSON.parse(localStorage.getItem('callPrefs') || '{}');
 if (typeof storedPrefs.sound === 'boolean') soundToggle.checked = storedPrefs.sound;
@@ -32,12 +37,23 @@ if (typeof storedPrefs.vibration === 'boolean') vibrationToggle.checked = stored
 const storedDevicePrefs = getStoredDevicePrefs();
 sipManager.setDevicePreferences(storedDevicePrefs);
 
+navLinks.forEach((link) => {
+  link.addEventListener('click', () => {
+    if (link.classList.contains('active')) return;
+    if (!callPanel.classList.contains('hidden')) return;
+    setActiveTab(link.dataset.target);
+  });
+});
+
+setActiveTab('dialer-panel');
+
 init();
 
 async function init() {
   savedConfig = await window.electronAPI.getSipConfig();
   hydrateForm(savedConfig);
   await initializeDeviceSelectors();
+  updateTabPanelsVisibility();
 
   sipManager.setCallbacks({
     onConnect: () => setStatus(true),
@@ -100,8 +116,14 @@ settingsForm.addEventListener('submit', async (e) => {
     JSON.stringify(currentNotificationPrefs())
   );
 
-  await window.electronAPI.saveSipConfig(config);
-  await sipManager.connect(config);
+  try {
+    await window.electronAPI.saveSipConfig(config);
+    await sipManager.connect(config);
+    showSettingsNotice('Настройки сохранены', true);
+  } catch (error) {
+    console.error('Ошибка сохранения настроек', error);
+    showSettingsNotice('Не удалось сохранить настройки', false);
+  }
 });
 
 btnCall.addEventListener('click', () => {
@@ -146,8 +168,8 @@ function setStatus(isOnline) {
 }
 
 function showCallInterface(name, status, isIncoming) {
-  dialerPanel.classList.add('hidden');
   callPanel.classList.remove('hidden');
+  updateTabPanelsVisibility();
 
   callerNameDisplay.textContent = name || 'Неизвестный';
   callerNumberDisplay.textContent = status;
@@ -161,7 +183,7 @@ function showCallInterface(name, status, isIncoming) {
 
 function hideCallInterface() {
   callPanel.classList.add('hidden');
-  dialerPanel.classList.remove('hidden');
+  updateTabPanelsVisibility();
   callerNameDisplay.textContent = 'Неизвестный';
   callerNumberDisplay.textContent = '';
   btnHold.classList.remove('active-hold');
@@ -268,4 +290,36 @@ function handleDevicePreferenceChange() {
   };
   saveDevicePrefs(prefs);
   sipManager.setDevicePreferences(prefs);
+}
+
+function setActiveTab(targetId = 'dialer-panel') {
+  if (!targetId) return;
+  activeTabId = targetId;
+  navLinks.forEach((link) => {
+    link.classList.toggle('active', link.dataset.target === targetId);
+  });
+  updateTabPanelsVisibility();
+}
+
+function updateTabPanelsVisibility() {
+  const callActive = !callPanel.classList.contains('hidden');
+  tabPanels.forEach((id) => {
+    const panel = document.getElementById(id);
+    if (!panel) return;
+    const shouldHide = callActive || id !== activeTabId;
+    panel.classList.toggle('hidden', shouldHide);
+  });
+}
+
+function showSettingsNotice(message, isSuccess) {
+  if (!settingsNotice) return;
+  settingsNotice.textContent = message;
+  settingsNotice.classList.remove('success', 'error');
+  settingsNotice.classList.add(isSuccess ? 'success' : 'error');
+
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => {
+    settingsNotice.textContent = '';
+    settingsNotice.classList.remove('success', 'error');
+  }, 4000);
 }
