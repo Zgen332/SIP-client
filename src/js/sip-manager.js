@@ -24,6 +24,7 @@ export class SIPManager {
 
     const userAgentOptions = {
       uri,
+      displayName: config.display_name || config.username,
       transportOptions: {
         server: `wss://${config.sip_server}:${config.port}`,
         connectionTimeout: 12000

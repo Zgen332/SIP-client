@@ -46,6 +46,7 @@ app.on('window-all-closed', () => {
 
 ipcMain.handle('get-sip-config', () => {
   return store.get('sip_config', {
+    display_name: '',
     sip_server: 'f2.ads365.ru',
     port: '7443',
     username: '',

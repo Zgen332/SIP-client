@@ -43,14 +43,16 @@ async function init() {
     onConnect: () => setStatus(true),
     onDisconnect: () => setStatus(false),
     onIncoming: (info) => {
-      const formatted = formatPhone(info.number || info.displayName);
+      const displayName = info.displayName || info.number || 'Неизвестный';
+      const formatted = formatPhone(info.number || displayName);
       const prefs = currentNotificationPrefs();
       window.electronAPI.showIncomingCall({
         ...info,
         formatted,
+        displayName,
         preferences: prefs
       });
-      showCallInterface(formatted, 'Входящий звонок...', true);
+      showCallInterface(displayName, 'Входящий звонок...', true);
     },
     onCallEstablished: () => {
       window.electronAPI.closePopup();
@@ -72,6 +74,7 @@ async function init() {
 }
 
 function hydrateForm(config) {
+  document.getElementById('display-name').value = config.display_name || '';
   document.getElementById('sip-server').value = config.sip_server || '';
   document.getElementById('port').value = config.port || '';
   document.getElementById('username').value = config.username || '';
@@ -81,6 +84,7 @@ function hydrateForm(config) {
 settingsForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const config = {
+    display_name: document.getElementById('display-name').value.trim(),
     sip_server: document.getElementById('sip-server').value.trim(),
     port: document.getElementById('port').value.trim(),
     username: document.getElementById('username').value.trim(),
