@@ -19,6 +19,7 @@ export class SIPManager {
   }
 
   async connect(config) {
+    await this.stop(true);
     this.config = config;
     const uri = SIP.UserAgent.makeURI(`sip:${config.username}@${config.sip_server}`);
     if (!uri) throw new Error('Неверный SIP URI');
@@ -139,17 +140,49 @@ export class SIPManager {
     this.localHold = false;
   }
 
+  async stop(soft = false) {
+    if (this.session) {
+      try {
+        this.hangUp();
+      } catch (error) {
+        console.warn('Ошибка завершения активной сессии', error);
+      }
+    }
+
+    if (this.registerer) {
+      try {
+        await this.registerer.unregister();
+      } catch (error) {
+        if (!soft) console.warn('Ошибка unregister', error);
+      }
+      this.registerer = null;
+    }
+
+    if (this.ua) {
+      try {
+        await this.ua.stop();
+      } catch (error) {
+        if (!soft) console.warn('Ошибка остановки UA', error);
+      }
+      this.ua = null;
+    }
+  }
+
   async toggleHold() {
     if (!this.session || this.session.state !== SIP.SessionState.Established) return false;
     const shouldHold = !this.localHold;
+    const holdModifier = SIP.Web?.holdModifier;
 
-    const modifier = shouldHold
-      ? SIP.Web.Modifiers.hold
-      : SIP.Web.Modifiers.unhold;
+    if (shouldHold && !holdModifier) {
+      console.warn('Hold modifier недоступен в текущей версии SIP.js');
+      return this.localHold;
+    }
+
+    const modifiers = shouldHold ? [holdModifier] : [];
 
     try {
       await this.session.invite({
-        sessionDescriptionHandlerModifiers: [modifier],
+        sessionDescriptionHandlerModifiers: modifiers,
         sessionDescriptionHandlerOptions: {
           constraints: this.createConstraints()
         }

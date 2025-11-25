@@ -86,13 +86,21 @@ select {
   }
   
   .btn-control {
-    background: rgba(255, 255, 255, 0.12);
-    margin-bottom: 0;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #e0edff;
+  margin-bottom: 0;
+  transition: opacity 0.2s ease, transform 0.1s ease;
   }
   
   .btn-control.hidden {
     display: none;
   }
+
+.btn-control:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
   
   .call-info {
     text-align: center;
