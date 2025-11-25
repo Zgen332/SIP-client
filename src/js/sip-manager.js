@@ -45,7 +45,9 @@ export class SIPManager {
           this.session = invitation;
           this.attachSessionListeners(invitation);
           const number = invitation.remoteIdentity.uri.user;
-          const displayName = invitation.remoteIdentity.displayName || number || 'Неизвестный';
+          const headerName = invitation.request?.getHeader?.('X-Display-Name');
+          const decodedHeader = headerName ? decodeURIComponent(headerName) : null;
+          const displayName = decodedHeader || invitation.remoteIdentity.displayName || number || 'Неизвестный';
           this.callbacks.onIncoming?.({ number, displayName });
         }
       }
@@ -108,12 +110,27 @@ export class SIPManager {
     };
   }
 
+  getExtraHeaders() {
+    const headers = [];
+    if (this.config?.display_name) {
+      headers.push(`X-Display-Name: ${encodeURIComponent(this.config.display_name)}`);
+    }
+    return headers;
+  }
+
   async makeCall(number) {
     if (!this.ua) return;
     const target = SIP.UserAgent.makeURI(`sip:${number}@${this.config.sip_server}`);
     if (!target) throw new Error('Некорректный номер');
 
-    this.session = new SIP.Inviter(this.ua, target, this.inviteOptions());
+    const inviteOptions = {
+      ...this.inviteOptions(),
+      requestOptions: {
+        extraHeaders: this.getExtraHeaders()
+      }
+    };
+
+    this.session = new SIP.Inviter(this.ua, target, inviteOptions);
     this.localHold = false;
     this.attachSessionListeners(this.session);
     await this.session.invite();
