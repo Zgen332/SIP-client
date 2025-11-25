@@ -17,6 +17,11 @@
       height: 100vh;
       text-align: center;
       padding: 24px;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    html {
+      overflow: hidden;
     }
     h3 {
       margin: 0;
@@ -83,7 +88,9 @@
     let closeTimer = null;
 
     window.electronAPI.onSetCallerInfo((info) => {
-      numberEl.innerText = info.formatted || info.number || 'Неизвестный';
+      // Приоритет: displayName > formatted > number
+      const displayText = info.displayName || info.formatted || info.number || 'Неизвестный';
+      numberEl.innerText = displayText;
       prefs = info.preferences || prefs;
 
       if (prefs.sound) {

@@ -11,6 +11,7 @@ export class SIPManager {
       inputDeviceId: null,
       outputDeviceId: null
     };
+    this.localHold = false;
   }
 
   setCallbacks(callbacks) {
@@ -112,12 +113,14 @@ export class SIPManager {
     if (!target) throw new Error('Некорректный номер');
 
     this.session = new SIP.Inviter(this.ua, target, this.inviteOptions());
+    this.localHold = false;
     this.attachSessionListeners(this.session);
     await this.session.invite();
   }
 
   answerCall() {
     if (!this.session || this.session.state !== SIP.SessionState.Initial) return;
+    this.localHold = false;
     this.session.accept(this.inviteOptions());
   }
 
@@ -133,19 +136,29 @@ export class SIPManager {
 
     this.callbacks.onCallEnded?.();
     this.session = null;
+    this.localHold = false;
   }
 
   async toggleHold() {
     if (!this.session || this.session.state !== SIP.SessionState.Established) return false;
-    const isHolding = this.session.sessionDescriptionHandler?.peerConnection?.getTransceivers()
-      ?.some((t) => t.direction === 'sendonly');
+    const shouldHold = !this.localHold;
+
+    const modifier = shouldHold
+      ? SIP.Web.Modifiers.hold
+      : SIP.Web.Modifiers.unhold;
 
     try {
-      await this.session.sessionDescriptionHandler.hold(!isHolding);
-      return !isHolding;
+      await this.session.invite({
+        sessionDescriptionHandlerModifiers: [modifier],
+        sessionDescriptionHandlerOptions: {
+          constraints: this.createConstraints()
+        }
+      });
+      this.localHold = shouldHold;
+      return shouldHold;
     } catch (error) {
       console.error('Hold failed', error);
-      return isHolding;
+      return this.localHold;
     }
   }
 
@@ -153,11 +166,16 @@ export class SIPManager {
     session.stateChange.addListener((state) => {
       if (state === SIP.SessionState.Established) {
         this.bindRemoteAudio(session);
-        this.callbacks.onCallEstablished?.();
+        // Получаем имя собеседника из установленной сессии
+        const remoteIdentity = session.remoteIdentity;
+        const displayName = remoteIdentity?.displayName || remoteIdentity?.uri?.user || 'Неизвестный';
+        this.callbacks.onCallEstablished?.(displayName);
+        this.localHold = false;
       }
       if (state === SIP.SessionState.Terminated) {
         this.callbacks.onCallEnded?.();
         this.session = null;
+        this.localHold = false;
       }
     });
   }

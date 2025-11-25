@@ -54,8 +54,12 @@ async function init() {
       });
       showCallInterface(displayName, 'Входящий звонок...', true);
     },
-    onCallEstablished: () => {
+    onCallEstablished: (displayName) => {
       window.electronAPI.closePopup();
+      // Обновляем имя собеседника, если оно пришло
+      if (displayName && displayName !== 'Неизвестный') {
+        callerNameDisplay.textContent = displayName;
+      }
       updateCallStatus('Разговор идет');
       startTimer();
       btnHold.disabled = false;
